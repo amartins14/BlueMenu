@@ -17,7 +17,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        _viewModel = new MainViewModel(new PersistenceService(), new MockBluetoothService());
+        var bluetoothService = new WindowsBluetoothService();
+        _viewModel = new MainViewModel(new PersistenceService(), bluetoothService);
         DataContext = _viewModel;
 
         using var iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/BlueMenu.ico"))?.Stream;
@@ -56,6 +57,7 @@ public partial class MainWindow : Window
         Closed += (_, _) =>
         {
             _notifyIcon.Dispose();
+            bluetoothService.Dispose();
             if (_ownsTrayIcon)
             {
                 _trayIcon.Dispose();

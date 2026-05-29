@@ -6,14 +6,14 @@
         xmlns:models="clr-namespace:BlueMenu.App.Models"
         mc:Ignorable="d"
         Title="BlueMenu"
-        Width="460"
-        Height="700"
+        Width="520"
+        Height="760"
         WindowStartupLocation="Manual"
         ResizeMode="CanResizeWithGrip"
         Icon="Assets/BlueMenu.ico"
-        Background="#F6F7FB"
+        Background="{StaticResource PageBackgroundBrush}"
         FontFamily="Segoe UI Variable Display">
-    <Grid Margin="16">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -21,102 +21,102 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,8">
-            <TextBlock Text="Bluetooth" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center"/>
-            <Button DockPanel.Dock="Right" Width="32" Height="32" Margin="8,0,0,0" Command="{Binding ToggleSettingsCommand}" ToolTip="Settings">⚙</Button>
+        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Text="Bluetooth" FontSize="30" FontWeight="SemiBold"/>
+                <TextBlock Text="Manage paired and nearby devices" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/>
+            </StackPanel>
+            <Button DockPanel.Dock="Right" Width="36" Height="36" Margin="8,0,0,0" Command="{Binding ToggleSettingsCommand}" ToolTip="Settings">⚙</Button>
         </DockPanel>
 
-        <Border Grid.Row="1" Background="#FFF5E6" BorderBrush="#F59E0B" BorderThickness="1" Padding="8" CornerRadius="8" Margin="0,0,0,8"
+        <Border Grid.Row="1" Background="#FFF4E9" BorderBrush="#F59E0B" BorderThickness="1" Padding="10" CornerRadius="10" Margin="0,0,0,10"
                 Visibility="{Binding GlobalError, Converter={StaticResource StringHasContentToVisibilityConverter}}">
             <TextBlock Text="{Binding GlobalError}" Foreground="#7C2D12" TextWrapping="Wrap"/>
         </Border>
 
-        <Grid Grid.Row="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Paired Devices" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ListBox ItemsSource="{Binding PairedDevices}" BorderThickness="0" Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:BluetoothDeviceItem}">
+                            <Border Background="{StaticResource PanelBackgroundBrush}" CornerRadius="12" Padding="12" Margin="0,0,0,10" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Row="0" Text="Paired Devices" FontWeight="SemiBold" Margin="0,0,0,6"/>
-            <ListBox Grid.Row="1" ItemsSource="{Binding PairedDevices}" BorderThickness="0" Background="Transparent">
-                <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type models:BluetoothDeviceItem}">
-                        <Border Background="White" CornerRadius="10" Padding="10" Margin="0,0,0,8" BorderBrush="#E5E7EB" BorderThickness="1">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                                    <Ellipse Width="10" Height="10" Fill="{Binding State, Converter={StaticResource StateToBrushConverter}}" VerticalAlignment="Top" Margin="0,4,10,0"/>
 
-                                <Ellipse Width="10" Height="10" Fill="{Binding State, Converter={StaticResource StateToBrushConverter}}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-
-                                <StackPanel Grid.Column="1">
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding State}" Foreground="#6B7280" FontSize="12"/>
-                                    <StackPanel Orientation="Horizontal" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <TextBlock Text="Failed to Pair" Foreground="#B91C1C" FontSize="12"/>
-                                        <Button Content="ⓘ" Margin="4,0,0,0" Padding="4,0" Command="{Binding DataContext.ShowErrorInfoCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="{Binding State}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,2,0,0"/>
+                                        <StackPanel Orientation="Horizontal" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,4,0,0">
+                                            <TextBlock Text="Connection issue" Foreground="#B91C1C" FontSize="12"/>
+                                            <Button Content="Details" Margin="6,0,0,0" Padding="6,2" Command="{Binding DataContext.ShowErrorInfoCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                        <CheckBox Content="Auto-connect" IsChecked="{Binding IsAutoConnectEnabled}" Margin="0,8,0,0" FontSize="12"/>
                                     </StackPanel>
-                                    <CheckBox Content="Auto-connect" IsChecked="{Binding IsAutoConnectEnabled}" Margin="0,4,0,0" FontSize="12"/>
-                                </StackPanel>
 
-                                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                    <Button Content="Connect" Margin="0,0,4,0" Command="{Binding DataContext.ConnectCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                                    <Button Content="Disconnect" Margin="0,0,4,0" Command="{Binding DataContext.DisconnectCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                                    <Button Content="Forget" Command="{Binding DataContext.ForgetCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <Button Width="92" Content="Connect" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,0,6" Command="{Binding DataContext.ConnectCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                        <Button Width="92" Content="Disconnect" Margin="0,0,0,6" Command="{Binding DataContext.DisconnectCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                        <Button Width="92" Content="Forget" Command="{Binding DataContext.ForgetCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
 
-            <TextBlock Grid.Row="2" Text="Nearby Devices" FontWeight="SemiBold" Margin="0,4,0,6"/>
-            <ListBox Grid.Row="3" ItemsSource="{Binding NearbyDevices}" BorderThickness="0" Background="Transparent">
-                <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type models:BluetoothDeviceItem}">
-                        <Border Background="White" CornerRadius="10" Padding="10" Margin="0,0,0,8" BorderBrush="#E5E7EB" BorderThickness="1">
-                            <DockPanel LastChildFill="False">
-                                <StackPanel DockPanel.Dock="Left">
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding State}" Foreground="#6B7280" FontSize="12"/>
-                                </StackPanel>
-                                <Button DockPanel.Dock="Right" Content="Pair" Command="{Binding DataContext.PairCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
-                            </DockPanel>
-                        </Border>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                <TextBlock Text="Nearby Devices" FontWeight="SemiBold" Margin="0,4,0,8"/>
+                <ListBox ItemsSource="{Binding NearbyDevices}" BorderThickness="0" Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:BluetoothDeviceItem}">
+                            <Border Background="{StaticResource PanelBackgroundBrush}" CornerRadius="12" Padding="12" Margin="0,0,0,10" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                        <TextBlock Text="{Binding State}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Width="92" Content="Pair" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding DataContext.PairCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
 
-            <Expander Grid.Row="4" Header="Settings" IsExpanded="{Binding SettingsVisible}" Margin="0,8,0,8">
-                <StackPanel Margin="8">
-                    <CheckBox Content="Remember window position" IsChecked="{Binding RememberWindowPosition}" Margin="0,0,0,6"/>
-                    <CheckBox Content="Show connect/disconnect notifications" IsChecked="{Binding ShowNotifications}" Margin="0,0,0,6"/>
-                    <CheckBox Content="Open at startup" IsChecked="{Binding OpenAtStartup}" Margin="0,0,0,6"/>
-                    <CheckBox Content="Show debug log panel" IsChecked="{Binding ShowDebugLog}" />
-                </StackPanel>
-            </Expander>
+                <Expander Header="Settings" IsExpanded="{Binding SettingsVisible}" Margin="0,8,0,10" Background="{StaticResource PanelBackgroundBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1">
+                    <StackPanel Margin="12,10,12,6">
+                        <CheckBox Content="Remember window position" IsChecked="{Binding RememberWindowPosition}"/>
+                        <CheckBox Content="Show connect/disconnect notifications" IsChecked="{Binding ShowNotifications}"/>
+                        <CheckBox Content="Open at startup" IsChecked="{Binding OpenAtStartup}"/>
+                        <CheckBox Content="Show debug log panel" IsChecked="{Binding ShowDebugLog}" Margin="0,0,0,0"/>
+                    </StackPanel>
+                </Expander>
 
-            <Border Grid.Row="5" Background="#111827" CornerRadius="8" Padding="8" Visibility="{Binding ShowDebugLog, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <DockPanel>
-                    <Button DockPanel.Dock="Top" Content="Copy debug/log info" HorizontalAlignment="Right" Margin="0,0,0,6" Command="{Binding CopyLogsCommand}"/>
-                    <ListBox ItemsSource="{Binding Logs}" BorderThickness="0" Background="#111827">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate DataType="{x:Type models:LogEntry}">
-                                <TextBlock Text="{Binding Display}" Foreground="{Binding Level, Converter={StaticResource LogLevelToBrushConverter}}" FontFamily="Consolas" FontSize="11"/>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
-            </Border>
-        </Grid>
+                <Border Background="#0B1220" CornerRadius="10" Padding="10" Visibility="{Binding ShowDebugLog, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <DockPanel>
+                        <Button DockPanel.Dock="Top" Content="Copy debug/log info" HorizontalAlignment="Right" Margin="0,0,0,8" Command="{Binding CopyLogsCommand}"/>
+                        <ListBox ItemsSource="{Binding Logs}" BorderThickness="0" Background="#0B1220">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:LogEntry}">
+                                    <TextBlock Text="{Binding Display}" Foreground="{Binding Level, Converter={StaticResource LogLevelToBrushConverter}}" FontFamily="Consolas" FontSize="11"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
 
-        <TextBlock Grid.Row="3" Foreground="#B45309" Margin="0,8,0,0"
+        <TextBlock Grid.Row="3" Foreground="#B45309" Margin="0,10,0,0"
                    Text="Running without elevation — some features may not work"
                    Visibility="{Binding IsRunningElevated, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
     </Grid>
