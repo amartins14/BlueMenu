@@ -1,7 +1,8 @@
 <Application x:Class="BlueMenu.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:BlueMenu.App.Converters">
+             xmlns:converters="clr-namespace:BlueMenu.App.Converters"
+             StartupUri="MainWindow.xaml">
     <Application.Resources>
         <converters:StateToBrushConverter x:Key="StateToBrushConverter" />
         <converters:LogLevelToBrushConverter x:Key="LogLevelToBrushConverter" />

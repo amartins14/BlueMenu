@@ -68,6 +68,11 @@ public partial class MainWindow : Window
             Top = top.Value;
             Left = left.Value;
         }
+
+        // Show the window on startup
+        Show();
+        WindowState = WindowState.Normal;
+        Activate();
     }
 
     private void ShowFromTray()
