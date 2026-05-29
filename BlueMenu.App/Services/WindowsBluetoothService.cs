@@ -1,3 +1,4 @@
+using BlueMenu.App.Models;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Radios;
