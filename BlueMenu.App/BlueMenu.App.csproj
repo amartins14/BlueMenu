@@ -9,6 +9,11 @@
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <ApplicationManifest>App.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/BlueMenu.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets/BlueMenu.ico" />
+  </ItemGroup>
 
 </Project>

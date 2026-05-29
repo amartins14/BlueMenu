@@ -10,6 +10,7 @@
         Height="700"
         WindowStartupLocation="Manual"
         ResizeMode="CanResizeWithGrip"
+        Icon="Assets/BlueMenu.ico"
         Background="#F6F7FB"
         FontFamily="Segoe UI Variable Display">
     <Grid Margin="16">

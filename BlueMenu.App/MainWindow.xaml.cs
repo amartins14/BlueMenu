@@ -10,6 +10,8 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly Forms.NotifyIcon _notifyIcon;
+    private readonly Icon _trayIcon;
+    private readonly bool _ownsTrayIcon;
 
     public MainWindow()
     {
@@ -18,9 +20,20 @@ public partial class MainWindow : Window
         _viewModel = new MainViewModel(new PersistenceService(), new MockBluetoothService());
         DataContext = _viewModel;
 
+        using var iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/BlueMenu.ico"))?.Stream;
+        if (iconStream is null)
+        {
+            _trayIcon = SystemIcons.Application;
+        }
+        else
+        {
+            _trayIcon = new Icon(iconStream);
+            _ownsTrayIcon = true;
+        }
+
         _notifyIcon = new Forms.NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = _trayIcon,
             Visible = true,
             Text = "BlueMenu"
         };
@@ -40,7 +53,14 @@ public partial class MainWindow : Window
                 Hide();
             }
         };
-        Closed += (_, _) => _notifyIcon.Dispose();
+        Closed += (_, _) =>
+        {
+            _notifyIcon.Dispose();
+            if (_ownsTrayIcon)
+            {
+                _trayIcon.Dispose();
+            }
+        };
 
         var (top, left) = _viewModel.GetWindowPosition();
         if (top.HasValue && left.HasValue)
