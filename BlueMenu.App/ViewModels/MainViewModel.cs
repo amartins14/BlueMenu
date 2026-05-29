@@ -31,6 +31,11 @@ public sealed class MainViewModel : ObservableObject
 
         foreach (var cached in _settings.CachedDevices)
         {
+            if (cached.State == BluetoothDeviceState.Discovered || IsLegacyMockCachedDevice(cached))
+            {
+                continue;
+            }
+
             if (PairedDevices.Any(d => d.Id == cached.Id) || NearbyDevices.Any(d => d.Id == cached.Id))
             {
                 continue;
@@ -374,7 +379,6 @@ public sealed class MainViewModel : ObservableObject
     public void SaveState()
     {
         _settings.CachedDevices = PairedDevices
-            .Concat(NearbyDevices)
             .Select(d => new CachedDevice
             {
                 Id = d.Id,
@@ -386,4 +390,8 @@ public sealed class MainViewModel : ObservableObject
 
         _persistence.Save(_settings);
     }
+
+    private static bool IsLegacyMockCachedDevice(CachedDevice device)
+        => device.Id.StartsWith("bm-", StringComparison.OrdinalIgnoreCase)
+           || device.Id.StartsWith("near-", StringComparison.OrdinalIgnoreCase);
 }
