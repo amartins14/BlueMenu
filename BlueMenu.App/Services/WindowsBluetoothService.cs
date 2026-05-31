@@ -25,41 +25,30 @@ public sealed class WindowsBluetoothService : IBluetoothService, IDisposable
 
     public IReadOnlyList<BluetoothDeviceItem> GetInitialPairedDevices(Dictionary<string, bool> autoConnect)
     {
-        try
+        var bleDevices = TryFindPairedDevices(BluetoothLEDevice.GetDeviceSelectorFromPairingState(true), "BLE");
+        var classicDevices = TryFindPairedDevices(BluetoothDevice.GetDeviceSelectorFromPairingState(true), "classic");
+
+        var seenIds = new HashSet<string>();
+        var paired = new List<BluetoothDeviceItem>(bleDevices.Count + classicDevices.Count);
+
+        lock (_gate)
         {
-            var bleSelector = BluetoothLEDevice.GetDeviceSelectorFromPairingState(true);
-            var classicSelector = BluetoothDevice.GetDeviceSelectorFromPairingState(true);
+            _knownDevices.Clear();
 
-            var bleDevices = DeviceInformation.FindAllAsync(bleSelector, _requestedProperties).AsTask().GetAwaiter().GetResult();
-            var classicDevices = DeviceInformation.FindAllAsync(classicSelector, _requestedProperties).AsTask().GetAwaiter().GetResult();
-
-            var seenIds = new HashSet<string>();
-            var paired = new List<BluetoothDeviceItem>(bleDevices.Count + classicDevices.Count);
-
-            lock (_gate)
+            foreach (var info in bleDevices.Concat(classicDevices))
             {
-                _knownDevices.Clear();
-
-                foreach (var info in bleDevices.Concat(classicDevices))
+                if (!seenIds.Add(info.Id))
                 {
-                    if (!seenIds.Add(info.Id))
-                    {
-                        continue;
-                    }
-
-                    var item = ToDeviceItem(info, autoConnect);
-                    _knownDevices[item.Id] = item;
-                    paired.Add(Clone(item));
+                    continue;
                 }
-            }
 
-            return paired;
+                var item = ToDeviceItem(info, autoConnect);
+                _knownDevices[item.Id] = item;
+                paired.Add(Clone(item));
+            }
         }
-        catch (Exception ex)
-        {
-            GlobalError?.Invoke($"Unable to read paired Bluetooth devices: {ex.Message}");
-            return [];
-        }
+
+        return paired;
     }
 
     public void StartScan()
@@ -110,6 +99,22 @@ public sealed class WindowsBluetoothService : IBluetoothService, IDisposable
         }
 
         watcher = null;
+    }
+
+    private IReadOnlyList<DeviceInformation> TryFindPairedDevices(string selector, string label)
+    {
+        try
+        {
+            return DeviceInformation.FindAllAsync(selector, _requestedProperties, DeviceInformationKind.AssociationEndpoint)
+                .AsTask()
+                .GetAwaiter()
+                .GetResult();
+        }
+        catch (Exception ex)
+        {
+            GlobalError?.Invoke($"Unable to read {label} paired Bluetooth devices: {ex.Message}");
+            return [];
+        }
     }
 
     public async Task ConnectAsync(BluetoothDeviceItem device)

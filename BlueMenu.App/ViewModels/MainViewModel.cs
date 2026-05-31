@@ -24,6 +24,9 @@ public sealed class MainViewModel : ObservableObject
         _bluetoothService = bluetoothService;
         _settings = _persistence.Load();
 
+        _bluetoothService.DeviceUpdated += OnDeviceUpdated;
+        _bluetoothService.GlobalError += OnGlobalError;
+
         foreach (var device in _bluetoothService.GetInitialPairedDevices(_settings.DeviceAutoConnect))
         {
             UpsertDevice(device);
@@ -55,9 +58,6 @@ public sealed class MainViewModel : ObservableObject
         ShowNotifications = _settings.ShowNotifications;
         OpenAtStartup = _settings.OpenAtStartup;
         RememberWindowPosition = _settings.RememberWindowPosition;
-
-        _bluetoothService.DeviceUpdated += OnDeviceUpdated;
-        _bluetoothService.GlobalError += OnGlobalError;
 
         ConnectCommand = new RelayCommand<BluetoothDeviceItem>(async device =>
         {
