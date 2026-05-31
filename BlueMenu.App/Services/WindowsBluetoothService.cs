@@ -14,7 +14,8 @@ public sealed class WindowsBluetoothService : IBluetoothService, IDisposable
     private readonly Dictionary<string, BluetoothLEDevice> _activeConnections = [];
     private readonly string[] _requestedProperties = [IsConnectedProperty];
 
-    private DeviceWatcher? _watcher;
+    private DeviceWatcher? _bleWatcher;
+    private DeviceWatcher? _classicWatcher;
     private bool _disposed;
 
     public event Action<BluetoothDeviceItem>? DeviceUpdated;
@@ -26,16 +27,26 @@ public sealed class WindowsBluetoothService : IBluetoothService, IDisposable
     {
         try
         {
-            var selector = BluetoothLEDevice.GetDeviceSelectorFromPairingState(true);
-            var devices = DeviceInformation.FindAllAsync(selector, _requestedProperties).AsTask().GetAwaiter().GetResult();
-            var paired = new List<BluetoothDeviceItem>(devices.Count);
+            var bleSelector = BluetoothLEDevice.GetDeviceSelectorFromPairingState(true);
+            var classicSelector = BluetoothDevice.GetDeviceSelectorFromPairingState(true);
+
+            var bleDevices = DeviceInformation.FindAllAsync(bleSelector, _requestedProperties).AsTask().GetAwaiter().GetResult();
+            var classicDevices = DeviceInformation.FindAllAsync(classicSelector, _requestedProperties).AsTask().GetAwaiter().GetResult();
+
+            var seenIds = new HashSet<string>();
+            var paired = new List<BluetoothDeviceItem>(bleDevices.Count + classicDevices.Count);
 
             lock (_gate)
             {
                 _knownDevices.Clear();
 
-                foreach (var info in devices)
+                foreach (var info in bleDevices.Concat(classicDevices))
                 {
+                    if (!seenIds.Add(info.Id))
+                    {
+                        continue;
+                    }
+
                     var item = ToDeviceItem(info, autoConnect);
                     _knownDevices[item.Id] = item;
                     paired.Add(Clone(item));
@@ -58,36 +69,47 @@ public sealed class WindowsBluetoothService : IBluetoothService, IDisposable
             return;
         }
 
-        if (_watcher is { Status: DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted })
-        {
-            return;
-        }
-
-        var selector = BluetoothLEDevice.GetDeviceSelectorFromPairingState(false);
-        _watcher = DeviceInformation.CreateWatcher(selector, _requestedProperties, DeviceInformationKind.AssociationEndpoint);
-        _watcher.Added += OnWatcherAdded;
-        _watcher.Updated += OnWatcherUpdated;
-        _watcher.Removed += OnWatcherRemoved;
-        _watcher.Start();
+        StartWatcher(ref _bleWatcher, BluetoothLEDevice.GetDeviceSelectorFromPairingState(false));
+        StartWatcher(ref _classicWatcher, BluetoothDevice.GetDeviceSelectorFromPairingState(false));
     }
 
     public void StopScan()
     {
-        if (_watcher is null)
+        StopWatcher(ref _bleWatcher);
+        StopWatcher(ref _classicWatcher);
+    }
+
+    private void StartWatcher(ref DeviceWatcher? watcher, string selector)
+    {
+        if (watcher is { Status: DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted })
         {
             return;
         }
 
-        _watcher.Added -= OnWatcherAdded;
-        _watcher.Updated -= OnWatcherUpdated;
-        _watcher.Removed -= OnWatcherRemoved;
+        watcher = DeviceInformation.CreateWatcher(selector, _requestedProperties, DeviceInformationKind.AssociationEndpoint);
+        watcher.Added += OnWatcherAdded;
+        watcher.Updated += OnWatcherUpdated;
+        watcher.Removed += OnWatcherRemoved;
+        watcher.Start();
+    }
 
-        if (_watcher.Status is DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted)
+    private void StopWatcher(ref DeviceWatcher? watcher)
+    {
+        if (watcher is null)
         {
-            _watcher.Stop();
+            return;
         }
 
-        _watcher = null;
+        watcher.Added -= OnWatcherAdded;
+        watcher.Updated -= OnWatcherUpdated;
+        watcher.Removed -= OnWatcherRemoved;
+
+        if (watcher.Status is DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted)
+        {
+            watcher.Stop();
+        }
+
+        watcher = null;
     }
 
     public async Task ConnectAsync(BluetoothDeviceItem device)
